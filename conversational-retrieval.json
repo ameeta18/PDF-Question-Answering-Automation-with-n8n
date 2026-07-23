@@ -1,0 +1,184 @@
+{
+  "name": "flow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "what is the article attention is all you need talking about?",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -320,
+        -48
+      ],
+      "id": "5d86fa07-3029-4739-88c1-0a9cf02ea83c",
+      "name": "When chat message received",
+      "webhookId": "39605d3b-8aed-4f9f-bd70-97db158baab7"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Always consult the vector store before answering any question."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "973450f5-53e6-4b3e-8d2d-19e294a4b44e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        224
+      ],
+      "id": "7948844a-6f7e-4c28-8782-67b6415574ac",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "Z7xKQApjHfsWd7iR",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        224
+      ],
+      "id": "9376abfd-4d30-4407-9f88-79c9e311cef4",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this tool to search the \"Attention Is All You Need\" research paper. \n   Search here whenever the user asks about transformers, attention mechanisms, \n   or anything related to the paper.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        192
+      ],
+      "id": "69c5de2c-2241-4a18-9b73-66386f950cd8",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Nildvw0dbWgszTAh",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        336,
+        320
+      ],
+      "id": "aeb21def-9391-4594-a70c-82ea603da9af",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "49kt93247CsqVjxl",
+          "name": "HuggingFaceApi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ef2b218a-4d61-4a5e-98b7-72c23abdb15e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eee7b8974c80fb7f05deae73c149101c1fd0847083d9cb7e85904c31ba4eb036"
+  },
+  "id": "lhIYNs14hcqNguGH",
+  "tags": []
+}

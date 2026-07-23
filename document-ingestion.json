@@ -1,0 +1,195 @@
+{
+  "name": "flow 1",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -128
+      ],
+      "id": "94606e4c-3144-4f43-85c4-264d86921027",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/files/attention_is_all_you_need.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -112
+      ],
+      "id": "ca2a5682-4161-40d7-8594-e5c0d4e40677",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        -192
+      ],
+      "id": "49c18fcb-7464-4ead-a8b8-a150b816b1a7",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Nildvw0dbWgszTAh",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        656,
+        32
+      ],
+      "id": "1da0d184-af83-430e-96cd-03767b76c78c",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "49kt93247CsqVjxl",
+          "name": "HuggingFaceApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        80
+      ],
+      "id": "d66abaf0-1ce3-42c5-8815-8f6c0a867912",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        -128
+      ],
+      "id": "ca51efaa-14dc-41e5-afc7-163e54ad5501",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet fullText = '';\n\n// Try to get text from different possible fields\nfor (const item of items) {\n  if (item.json) {\n    // Try different text fields\n    fullText += item.json.text || item.json.data || item.json.content || '';\n  }\n  \n  // Also check binary data if available\n  if (item.binary && item.binary.data) {\n    // Skip binary for now, we want the text\n  }\n}\n\n// Remove metadata lines (lines that look like metadata)\nconst lines = fullText.split('\\n');\nconst cleanedLines = lines.filter(line => {\n  // Keep lines that have actual content (more than just numbers or dates)\n  const hasText = /[a-zA-Z]{4,}/.test(line);\n  const isNotMetadata = !/^(Producer:|Creator:|D:\\d+Z|PDF-\\d|\\d+\\.\\d+$)/.test(line.trim());\n  return hasText && isNotMetadata && line.trim().length > 10;\n});\n\nfullText = cleanedLines.join('\\n');\n\nif (!fullText || fullText.length < 100) {\n  throw new Error('No valid text extracted. Got: ' + fullText.substring(0, 200));\n}\n\n// Chunk the text\nconst chunkSize = 1000;\nconst overlap = 200;\nconst chunks = [];\n\nfor (let i = 0; i < fullText.length; i += (chunkSize - overlap)) {\n  const chunk = fullText.substring(i, i + chunkSize).trim();\n  \n  if (chunk.length > 100) {\n    chunks.push({\n      json: {\n        pageContent: chunk,\n        metadata: {\n          source: \"Attention Is All You Need\",\n          chunkIndex: chunks.length\n        }\n      }\n    });\n  }\n}\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -128
+      ],
+      "id": "f4c1167e-4683-4df4-98be-e515002d7b83",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e3d4cc07-8e1c-458f-a781-a58a8a674a34",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eee7b8974c80fb7f05deae73c149101c1fd0847083d9cb7e85904c31ba4eb036"
+  },
+  "id": "MBlmHK1M3ml4HDqJ",
+  "tags": []
+}
