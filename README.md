@@ -1,4 +1,4 @@
-# n8n PDF RAG Assistant
+# PDF-Question-Answering-Automation-with-n8n
 
 A two-stage document question-answering system built with **n8n**, **Supabase pgvector**, **Hugging Face embeddings**, and a **Groq-hosted Qwen model**.
 
